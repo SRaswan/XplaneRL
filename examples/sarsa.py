@@ -14,6 +14,9 @@ import os
 import gym_xplane
 from tf_slim.layers import layers as _layers;
 
+from lib import plotting
+import matplotlib
+matplotlib.style.use('ggplot')
 
 NUM_EPISODES = 10
 LEARNING_RATE_ACTOR = 0.0001
@@ -182,6 +185,10 @@ class Critic():
 
 
 def actor_critic(num_episodes,learning_rate_critic,learning_rate_actor,entropy_scalar):
+	# Keeps track of useful statistics
+	stats = plotting.EpisodeStats(
+		episode_lengths=np.zeros(num_episodes),
+		episode_rewards=np.zeros(num_episodes))
 
 
 	run_id = np.random.randint(10000)
@@ -210,8 +217,8 @@ def actor_critic(num_episodes,learning_rate_critic,learning_rate_actor,entropy_s
 		i=0
 		score = 0
 
-		#for g in range(10):
-		while True:
+		for g in range(num_episodes):
+		# while True:
 			
 			# Take a step
 			#env.render()
@@ -240,7 +247,10 @@ def actor_critic(num_episodes,learning_rate_critic,learning_rate_actor,entropy_s
 			steps += 1
 			#avg_actor_loss += 1
 			#avg_critic_loss += critic_loss
-			
+			# Update statistics
+			stats.episode_rewards[e] += reward
+			stats.episode_lengths[e] = g
+
 			score += reward
 			#print("Episode: " + str(e) + " Score: " + str(score))
 			print("Episode: " + str(e) + " Score: " + str(score))
@@ -255,9 +265,13 @@ def actor_critic(num_episodes,learning_rate_critic,learning_rate_actor,entropy_s
 		#reward_summary = tf.Summary(value=[tf.Summary.Value(tag='Reward',simple_value=score)])
 		#filewriter.add_summary(reward_summary,e)
 
+	plotting.plot_episode_stats(stats, smoothing_window=10)
 	return scores
 
-s = actor_critic(num_episodes=100000000000,learning_rate_critic=1e-8,learning_rate_actor=1e-8,entropy_scalar=2.6366508987303556e-02)
-#s = actor_critic(num_episodes=10,learning_rate_critic=1e-8,learning_rate_actor=1e-8,entropy_scalar=2.6366508987303556e-02)
+tf.reset_default_graph()
+# s = actor_critic(num_episodes=100000000000,learning_rate_critic=1e-8,learning_rate_actor=1e-8,entropy_scalar=2.6366508987303556e-02)
+s = actor_critic(num_episodes=10,learning_rate_critic=1e-8,learning_rate_actor=1e-8,entropy_scalar=2.6366508987303556e-02)
+
+
 
 print(s)
